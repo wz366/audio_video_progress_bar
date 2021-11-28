@@ -1013,7 +1013,13 @@ class _RenderProgressBar extends RenderBox {
       final thumbGlowPaint = Paint()..color = thumbGlowColor;
       canvas.drawCircle(center, thumbGlowRadius, thumbGlowPaint);
     }
-    canvas.drawCircle(center, thumbRadius, thumbPaint);
+    final path = Path()
+      ..moveTo(thumbDx - thumbRadius, localSize.height / 2)
+      ..lineTo(thumbDx, localSize.height / 2 + thumbRadius)
+      ..lineTo(thumbDx + thumbRadius, localSize.height / 2)
+      ..lineTo(thumbDx, localSize.height / 2 - thumbRadius)
+      ..lineTo(thumbDx - thumbRadius, localSize.height / 2);
+    canvas.drawPath(path, thumbPaint);
   }
 
   double _proportionOfTotal(Duration duration) {
