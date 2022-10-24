@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:audio_video_progress_bar_example/audio_player_manager.dart';
+import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:rxdart/rxdart.dart';
 
 /// The basic usage for setting the progress bar state is like this:
 ///
@@ -14,8 +14,7 @@ import 'package:rxdart/rxdart.dart';
 /// ```
 ///
 /// This example contains some extra code to ensure that the ProgressBar works
-/// under various situations. Do a seach for "ProgressBar" to find it below.
-
+/// under various situations. Do a search for "ProgressBar" to find it below.
 void main() {
   runApp(const MyApp());
 }
@@ -37,6 +36,35 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class HomeWidget extends StatefulWidget {
+  const HomeWidget({Key? key}) : super(key: key);
+
+  @override
+  State<HomeWidget> createState() => _HomeWidgetState();
+}
+
+class _HomeWidgetState extends State<HomeWidget> {
+  late AudioPlayerManager manager;
+
+  @override
+  void initState() {
+    super.initState();
+    manager = AudioPlayerManager();
+    manager.init();
+  }
+
+  @override
+  void dispose() {
+    manager.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FullExample(audioPlayerManager: manager);
+  }
+}
+
 var themeNotifier = ValueNotifier<ThemeVariation>(
   const ThemeVariation(Colors.blue, Brightness.light),
 );
@@ -47,16 +75,19 @@ class ThemeVariation {
   final Brightness brightness;
 }
 
-class HomeWidget extends StatefulWidget {
-  const HomeWidget({Key? key}) : super(key: key);
+class FullExample extends StatefulWidget {
+  const FullExample({
+    Key? key,
+    required this.audioPlayerManager,
+  }) : super(key: key);
+
+  final AudioPlayerManager audioPlayerManager;
+
   @override
-  _HomeWidgetState createState() => _HomeWidgetState();
+  State<FullExample> createState() => _FullExampleState();
 }
 
-class _HomeWidgetState extends State<HomeWidget> {
-  late AudioPlayer _player;
-  final url = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3';
-  late Stream<DurationState> _durationState;
+class _FullExampleState extends State<FullExample> {
   var _isShowingWidgetOutline = false;
   var _labelLocation = TimeLabelLocation.below;
   var _labelType = TimeLabelType.totalTime;
@@ -75,29 +106,12 @@ class _HomeWidgetState extends State<HomeWidget> {
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
-    _durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
-        _player.positionStream,
-        _player.playbackEventStream,
-        (position, playbackEvent) => DurationState(
-              progress: position,
-              buffered: playbackEvent.bufferedPosition,
-              total: playbackEvent.duration,
-            ));
-    _init();
-  }
-
-  Future<void> _init() async {
-    try {
-      await _player.setUrl(url);
-    } catch (e) {
-      debugPrint('An error occured $e');
-    }
+    widget.audioPlayerManager.init();
   }
 
   @override
   void dispose() {
-    _player.dispose();
+    widget.audioPlayerManager.dispose();
     super.dispose();
   }
 
@@ -400,7 +414,7 @@ class _HomeWidgetState extends State<HomeWidget> {
 
   StreamBuilder<DurationState> _progressBar() {
     return StreamBuilder<DurationState>(
-      stream: _durationState,
+      stream: widget.audioPlayerManager.durationState,
       builder: (context, snapshot) {
         final durationState = snapshot.data;
         final progress = durationState?.progress ?? Duration.zero;
@@ -410,9 +424,7 @@ class _HomeWidgetState extends State<HomeWidget> {
           progress: progress,
           buffered: buffered,
           total: total,
-          onSeek: (duration) {
-            _player.seek(duration);
-          },
+          onSeek: widget.audioPlayerManager.player.seek,
           onDragUpdate: (details) {
             debugPrint('${details.timeStamp}, ${details.localPosition}');
           },
@@ -436,7 +448,7 @@ class _HomeWidgetState extends State<HomeWidget> {
 
   StreamBuilder<PlayerState> _playButton() {
     return StreamBuilder<PlayerState>(
-      stream: _player.playerStateStream,
+      stream: widget.audioPlayerManager.player.playerStateStream,
       builder: (context, snapshot) {
         final playerState = snapshot.data;
         final processingState = playerState?.processingState;
@@ -453,33 +465,23 @@ class _HomeWidgetState extends State<HomeWidget> {
           return IconButton(
             icon: const Icon(Icons.play_arrow),
             iconSize: 32.0,
-            onPressed: _player.play,
+            onPressed: widget.audioPlayerManager.player.play,
           );
         } else if (processingState != ProcessingState.completed) {
           return IconButton(
             icon: const Icon(Icons.pause),
             iconSize: 32.0,
-            onPressed: _player.pause,
+            onPressed: widget.audioPlayerManager.player.pause,
           );
         } else {
           return IconButton(
             icon: const Icon(Icons.replay),
             iconSize: 32.0,
-            onPressed: () => _player.seek(Duration.zero),
+            onPressed: () =>
+                widget.audioPlayerManager.player.seek(Duration.zero),
           );
         }
       },
     );
   }
-}
-
-class DurationState {
-  const DurationState({
-    required this.progress,
-    required this.buffered,
-    this.total,
-  });
-  final Duration progress;
-  final Duration buffered;
-  final Duration? total;
 }

@@ -253,7 +253,7 @@ class ProgressBar extends LeafRenderObjectWidget {
   final double timeLabelPadding;
 
   @override
-  _RenderProgressBar createRenderObject(BuildContext context) {
+  RenderObject createRenderObject(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final textStyle = timeLabelTextStyle ?? theme.textTheme.bodyText1;
@@ -284,12 +284,11 @@ class ProgressBar extends LeafRenderObjectWidget {
   }
 
   @override
-  void updateRenderObject(
-      BuildContext context, _RenderProgressBar renderObject) {
+  void updateRenderObject(BuildContext context, RenderObject renderObject) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
     final textStyle = timeLabelTextStyle ?? theme.textTheme.bodyText1;
-    renderObject
+    (renderObject as _RenderProgressBar)
       ..progress = progress
       ..total = total
       ..buffered = buffered ?? Duration.zero
@@ -339,8 +338,15 @@ class ProgressBar extends LeafRenderObjectWidget {
     properties.add(ColorProperty('thumbColor', thumbColor));
     properties.add(ColorProperty('thumbGlowColor', thumbGlowColor));
     properties.add(DoubleProperty('thumbGlowRadius', thumbGlowRadius));
-    properties.add(FlagProperty('thumbCanPaintOutsideBar',
-        value: thumbCanPaintOutsideBar));
+    properties.add(
+      FlagProperty(
+        'thumbCanPaintOutsideBar',
+        value: thumbCanPaintOutsideBar,
+        ifTrue: 'true',
+        ifFalse: 'false',
+        showName: true,
+      ),
+    );
     properties
         .add(StringProperty('timeLabelLocation', timeLabelLocation.toString()));
     properties.add(StringProperty('timeLabelType', timeLabelType.toString()));
@@ -379,6 +385,21 @@ class ThumbDragDetails {
       'time: $timeStamp, '
       'global: $globalPosition, '
       'local: $localPosition)';
+}
+
+// Handles all gestures so that it will always win a the gesture arena.
+// Without doing this, if you used this widget in a swipable tab layout,
+// you would cause a swipe rather than a drag when trying to move the thumb.
+class _EagerHorizontalDragGestureRecognizer
+    extends HorizontalDragGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    resolve(GestureDisposition.accepted);
+  }
+
+  @override
+  String get debugDescription => '_EagerHorizontalDragGestureRecognizer';
 }
 
 class _RenderProgressBar extends RenderBox {
@@ -425,7 +446,7 @@ class _RenderProgressBar extends RenderBox {
         _timeLabelType = timeLabelType,
         _timeLabelTextStyle = timeLabelTextStyle,
         _timeLabelPadding = timeLabelPadding {
-    _drag = HorizontalDragGestureRecognizer()
+    _drag = _EagerHorizontalDragGestureRecognizer()
       ..onStart = _onDragStart
       ..onUpdate = _onDragUpdate
       ..onEnd = _onDragEnd
@@ -434,7 +455,7 @@ class _RenderProgressBar extends RenderBox {
   }
 
   // This is the gesture recognizer used to move the thumb.
-  HorizontalDragGestureRecognizer? _drag;
+  _EagerHorizontalDragGestureRecognizer? _drag;
 
   // This is a value between 0.0 and 1.0 used to indicate the position on
   // the bar.
@@ -485,8 +506,8 @@ class _RenderProgressBar extends RenderBox {
   }
 
   Duration _currentThumbDuration() {
-    final thumbMiliseconds = _thumbValue * total.inMilliseconds;
-    return Duration(milliseconds: thumbMiliseconds.round());
+    final thumbMilliseconds = _thumbValue * total.inMilliseconds;
+    return Duration(milliseconds: thumbMilliseconds.round());
   }
 
   // This needs to stay in sync with the layout. This could be a potential
@@ -1055,7 +1076,7 @@ class _RenderProgressBar extends RenderBox {
     final increased = _thumbValue + _semanticActionUnit;
     config.increasedValue = '${((increased).clamp(0.0, 1.0) * 100).round()}%';
 
-    // descrease action
+    // decrease action
     config.onDecrease = decreaseAction;
     final decreased = _thumbValue - _semanticActionUnit;
     config.decreasedValue = '${((decreased).clamp(0.0, 1.0) * 100).round()}%';
