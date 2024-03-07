@@ -1,3 +1,29 @@
+## [2.0.2] - February 29, 2023
+
+- Improve accessibility support for gesture-based adjustments (@orz12) (#66)
+- Update failing tests (possibly a font issue - unclear)
+
+## [2.0.1] - October 11, 2023
+
+- Fix text scale factor for progress and total labels (@stutid) (#61 and #63).
+
+## [2.0.0] - August 24, 2023
+
+- Bump to Dart 3.0 and Flutter 3.0.
+- Fix time label overflow (#60).
+- Clamp buffered and progress within total range (#59).
+
+## [1.0.1] - March 22, 2023
+
+-  Fix String format when Duration is negative (@swiftymf) (#38) 
+
+## [1.0.0] - February 3, 2023
+
+- Bump to stable release versioning
+- Draw progress bar to match thumb drag location (@navaronbracke) (#34)
+- Update current progress label while dragging thumb
+- Rename `textTheme.bodyText1` to `textTheme.bodyLarge`
+
 ## [0.11.0] - October 7, 2022
 
 - @Hwan-seok and @thesensibledev: fix horizontal drag and tap gesture detection when competing with other widgets (#44, #39, #31, #23)
