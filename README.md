@@ -111,3 +111,7 @@ Now the time labels are displayed on the side:
 If your interested in how this widget was made, check out the article [Creating a Flutter widget from scratch](https://suragch.medium.com/creating-a-flutter-widget-from-scratch-a9c01c47c630).
 
 Please [open an issue](https://github.com/suragch/audio_video_progress_bar/issues) if you find any bugs.
+
+## New feature requests
+
+There are a number of interesting feature requests in the GitHub issues. Unfortunately, with the other projects I have going on, I generally don't get around to implementing very many of them. Your best bet is to copy the source code and implement the feature yourself. On the other hand, if the issue you is important enough to you or your company, I'm open to being hired to add your desired feature to this package or to create a custom solution.
